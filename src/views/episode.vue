@@ -18,9 +18,9 @@
       </div>
       <div class="my-2 py-2 border-t border-b">
         Featured characters:
-        <div v-for="characterUrl in episode.characters" :key="`character-${characterUrl}`">
+        <div v-for="character in episode.characters" :key="`character-${character.id}`">
           <character-link
-            :character-url="characterUrl"
+            :character-id="character.id"
           />
         </div>
       </div>
@@ -32,7 +32,7 @@
 </template>
 
 <script>
-import { formResourceUrl } from '../api';
+import gql from 'graphql-tag'
 import CharacterLink from '../components/character-link';
 import Loading from '../components/loading';
 
@@ -41,27 +41,24 @@ export default {
     CharacterLink,
     Loading,
   },
-  data() {
-    return {
-      episode: null,
-    };
-  },
-  computed: {
-    resourceUrl() { return formResourceUrl('episode', this.$route.params.id); },
-  },
-  methods: {
-    fetchEpisode() {
-      this.$store.dispatch('getEpisode', this.resourceUrl)
-        .then(() => {
-          this.episode = this.$store.state.episodes.episodes[this.resourceUrl];
-        });
+  apollo: {
+    episode: {
+      query: gql`query getEpisode ($id: ID) {
+        episode (id: $id) {
+          name
+          air_date
+          episode
+          characters {
+            id
+          }
+        }
+      }`,
+      variables () {
+        return {
+            id: this.$route.params.id,
+        }
+      }
     },
-  },
-  mounted() {
-    this.episode = this.$store.state.episodes.episodes[this.resourceUrl];
-    if (this.episode === undefined) {
-      this.fetchEpisode();
-    }
   },
 };
 </script>

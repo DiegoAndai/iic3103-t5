@@ -7,31 +7,29 @@
 </template>
 
 <script>
+import gql from 'graphql-tag'
+
 export default {
   props: {
-    characterUrl: {
+    characterId: {
       required: true,
       type: String,
     },
   },
-  data() {
-    return {
-      character: null,
-    };
-  },
-  methods: {
-    fetchCharacter() {
-      this.$store.dispatch('getCharacter', this.characterUrl)
-        .then(() => {
-          this.character = this.$store.state.characters.characters[this.characterUrl];
-        });
+  apollo: {
+    character: {
+      query: gql`query getCharacter ($id: ID) {
+        character (id: $id) {
+          id
+          name
+        }
+      }`,
+      variables () {
+        return {
+            id: this.characterId,
+        }
+      }
     },
-  },
-  mounted() {
-    this.character = this.$store.state.characters.characters[this.characterUrl];
-    if (this.character === undefined) {
-      this.fetchCharacter();
-    }
   },
 };
 </script>
