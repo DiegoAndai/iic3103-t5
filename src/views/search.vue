@@ -9,31 +9,34 @@
       </span>
       search results
     </div>
-    <div v-if="searchingCharacters || searchingEpisodes || searchingLocations">
+    <div v-if="
+      linkedEpisodes.length == 0 &&
+      linkedCharacters.length == 0 &&
+      linkedLocations.length == 0">
       <loading />
     </div>
     <div v-else class="flex">
       <div class="mx-2">
-        Found {{episodeSearchUrls.length}} episodes:
-        <div v-for="url in episodeSearchUrls" :key="url">
+        Found {{linkedEpisodes.length}} episodes:
+        <div v-for="episode in linkedEpisodes" :key="episode.id">
           <episode-link
-            :episode-url="url"
+            :episode-id="episode.id"
           />
         </div>
       </div>
       <div class="mx-10">
-        Found {{characterSearchUrls.length}} characters:
-        <div v-for="url in characterSearchUrls" :key="url">
+        Found {{linkedCharacters.length}} characters:
+        <div v-for="character in linkedCharacters" :key="character.id">
           <character-link
-            :character-url="url"
+            :character-id="character.id"
           />
         </div>
       </div>
       <div class="mx-2">
-        Found {{locationSearchUrls.length}} locations:
-        <div v-for="url in locationSearchUrls" :key="url">
+        Found {{linkedLocations.length}} locations:
+        <div v-for="location in linkedCharacters" :key="location.id">
           <location-link
-            :location-url="url"
+            :location-id="location.id"
           />
         </div>
       </div>
@@ -42,7 +45,7 @@
 </template>
 
 <script>
-import { mapState } from 'vuex';
+import gql from 'graphql-tag'
 import EpisodeLink from '../components/episode-link.vue';
 import CharacterLink from '../components/character-link.vue';
 import LocationLink from '../components/location-link.vue';
@@ -55,29 +58,99 @@ export default {
     LocationLink,
     Loading,
   },
-  computed: {
-    ...mapState({
-      episodeSearchUrls: (state) => state.episodes.searchUrls,
-      searchingEpisodes: (state) => state.episodes.searchingEpisodes,
-      characterSearchUrls: (state) => state.characters.searchUrls,
-      searchingCharacters: (state) => state.characters.searchingCharacters,
-      locationSearchUrls: (state) => state.locations.searchUrls,
-      searchingLocations: (state) => state.locations.searchingLocations,
-    }),
+  data: function() {
+    return {
+      linkedEpisodes: [],
+      episodesPage: 1,
+      linkedCharacters: [],
+      charactersPage: 1,
+      linkedLocations: [],
+      locationsPage: 1
+    };
   },
-  methods: {
-    search() {
-      this.$store.dispatch('searchEpisodes', this.$route.query.term);
-      this.$store.dispatch('searchCharacters', this.$route.query.term);
-      this.$store.dispatch('searchLocations', this.$route.query.term);
-    }
-  },
-  mounted() {
-    this.search();
+  apollo: {
+    episodes: {
+      query() {
+        const query = `query getEpisodes ($page: Int!) {
+          episodes (
+            page: $page,
+            filter: { name: "${this.$route.query.term}" }
+          ) {
+            info {
+              next
+            }
+            results {
+              id
+            }
+          }
+        }`
+        return gql(query)
+      },
+      variables () {
+        return {
+            page: this.episodesPage,
+        }
+      }
+    },
+    characters: {
+      query() {
+        const query = `query getCharacters ($page: Int!) {
+          characters (
+            page: $page,
+            filter: { name: "${this.$route.query.term}" }
+          ) {
+            info {
+              next
+            }
+            results {
+              id
+            }
+          }
+        }`
+        return gql(query)
+      },
+      variables () {
+        return {
+            page: this.charactersPage,
+        }
+      }
+    },
+    locations: {
+      query() {
+        const query = `query getLocations ($page: Int!) {
+          locations (
+            page: $page,
+            filter: { name: "${this.$route.query.term}" }
+          ) {
+            info {
+              next
+            }
+            results {
+              id
+            }
+          }
+        }`
+        return gql(query)
+      },
+      variables () {
+        return {
+            page: this.locationsPage,
+        }
+      }
+    },
   },
   watch: {
-    $route() {
-      this.search();
+    episodes: function ({results: newEpisodes, info: { next }}) {
+      this.episodesPage = next || this.episodesPage;
+      this.linkedEpisodes = [...this.linkedEpisodes, ...newEpisodes ]
+    },
+    characters: function ({results: newCharacters, info: { next }}) {
+      this.charactersPage = next || this.charactersPage;
+      this.linkedCharacters = [...this.linkedCharacters, ...newCharacters ]
+    },
+    locations: function ({results: newLocations, info: { next }}) {
+      this.locationsPage = next || this.locationsPage;
+      this.linkedLocations = [...this.linkedLocations, ...newLocations ]
     }
   }
 };
