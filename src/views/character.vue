@@ -24,13 +24,16 @@
         Gender: {{ character.gender }}
       </div>
       <div>
-        Origin: <location-link :location-url="character.location.url"/>
+        Location: <location-link :location-id="character.location.id"/>
+      </div>
+      <div>
+        Origin: <location-link :location-id="character.origin.id"/>
       </div>
       <div class="my-2 py-2 border-t border-b">
         Featured in:
-        <div v-for="episodeUrl in character.episode" :key="`episode-${episodeUrl}`">
+        <div v-for="episode in character.episode" :key="`episode-${episode.id}`">
           <episode-link
-            :episode-url="episodeUrl"
+            :episode-id="episode.id"
           />
         </div>
       </div>
@@ -42,7 +45,7 @@
 </template>
 
 <script>
-import { formResourceUrl } from '../api';
+import gql from 'graphql-tag'
 import EpisodeLink from '../components/episode-link';
 import LocationLink from '../components/location-link';
 import Loading from '../components/loading';
@@ -53,27 +56,33 @@ export default {
     LocationLink,
     Loading,
   },
-  data() {
-    return {
-      character: null,
-    };
-  },
-  computed: {
-    resourceUrl() { return formResourceUrl('character', this.$route.params.id); },
-  },
-  methods: {
-    fetchCharacter() {
-      this.$store.dispatch('getCharacter', this.resourceUrl)
-        .then(() => {
-          this.character = this.$store.state.characters.characters[this.resourceUrl];
-        });
+  apollo: {
+    character: {
+      query: gql`query getCharacter ($id: ID) {
+        character (id: $id) {
+          name
+          image
+          status
+          species
+          type
+          gender
+          location {
+            id
+          }
+          origin {
+            id
+          }
+          episode {
+            id
+          }
+        }
+      }`,
+      variables () {
+        return {
+            id: this.$route.params.id,
+        }
+      }
     },
-  },
-  mounted() {
-    this.character = this.$store.state.characters.characters[this.resourceUrl];
-    if (this.character === undefined) {
-      this.fetchCharacter();
-    }
   },
 };
 </script>

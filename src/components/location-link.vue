@@ -1,5 +1,5 @@
 <template>
-  <router-link :to="`/location/${location.id}`" v-if="location">
+  <router-link :to="`/location/${locationId}`" v-if="location">
     <span class="text-blue-600 hover:underline">
       {{ location.name }}
     </span>
@@ -7,31 +7,29 @@
 </template>
 
 <script>
+import gql from 'graphql-tag'
+
 export default {
   props: {
-    locationUrl: {
+    locationId: {
       required: true,
       type: String,
     },
   },
-  data() {
-    return {
-      location: null,
-    };
-  },
-  methods: {
-    fetchLocation() {
-      this.$store.dispatch('getLocation', this.locationUrl)
-        .then(() => {
-          this.location = this.$store.state.locations.locations[this.locationUrl];
-        });
+  apollo: {
+    location: {
+      query: gql`query getLocation ($id: ID) {
+        location (id: $id) {
+          id
+          name
+        }
+      }`,
+      variables () {
+        return {
+            id: this.locationId,
+        }
+      }
     },
-  },
-  mounted() {
-    this.location = this.$store.state.locations.locations[this.locationUrl];
-    if (this.location === undefined) {
-      this.fetchLocation();
-    }
   },
 };
 </script>
