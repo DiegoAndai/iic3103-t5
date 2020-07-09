@@ -1,13 +1,14 @@
 <template>
   <div>
     <template v-if="episode">
-      <episode-link :episode-url="episode.url" />
+      <episode-link :episode-id="episodeId" />
       ({{ episode.episode }}), aired on {{ episode.air_date }}
     </template>
   </div>
 </template>
 
 <script>
+import gql from 'graphql-tag'
 import EpisodeLink from '../components/episode-link';
 
 export default {
@@ -15,29 +16,26 @@ export default {
     EpisodeLink,
   },
   props: {
-    episodeUrl: {
+    episodeId: {
       required: true,
       type: String,
     },
   },
-  data() {
-    return {
-      episode: null,
-    };
-  },
-  methods: {
-    fetchEpisode() {
-      this.$store.dispatch('getEpisode', this.episodeUrl)
-        .then(() => {
-          this.episode = this.$store.state.episodes.episodes[this.episodeUrl];
-        });
+  apollo: {
+    episode: {
+      query: gql`query getEpisode ($id: ID) {
+        episode (id: $id) {
+          name
+          air_date
+          episode
+        }
+      }`,
+      variables () {
+        return {
+            id: this.episodeId,
+        }
+      }
     },
-  },
-  mounted() {
-    this.episode = this.$store.state.episodes.episodes[this.episodeUrl];
-    if (this.episode === undefined) {
-      this.fetchEpisode();
-    }
   },
 };
 </script>

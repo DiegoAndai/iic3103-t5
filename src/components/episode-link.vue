@@ -1,5 +1,5 @@
 <template>
-  <router-link :to="`/episode/${episode.id}`" v-if="episode">
+  <router-link :to="`/episode/${episodeId}`">
     <span class="text-blue-600 hover:underline">
       {{ episode.name }}
     </span>
@@ -7,31 +7,28 @@
 </template>
 
 <script>
+import gql from 'graphql-tag'
+
 export default {
   props: {
-    episodeUrl: {
+    episodeId: {
       required: true,
       type: String,
     },
   },
-  data() {
-    return {
-      episode: null,
-    };
-  },
-  methods: {
-    fetchEpisode() {
-      this.$store.dispatch('getEpisode', this.episodeUrl)
-        .then(() => {
-          this.episode = this.$store.state.episodes.episodes[this.episodeUrl];
-        });
+  apollo: {
+    episode: {
+      query: gql`query getEpisode ($id: ID) {
+        episode (id: $id) {
+          name
+        }
+      }`,
+      variables () {
+        return {
+            id: this.episodeId,
+        }
+      }
     },
-  },
-  mounted() {
-    this.episode = this.$store.state.episodes.episodes[this.episodeUrl];
-    if (this.episode === undefined) {
-      this.fetchEpisode();
-    }
   },
 };
 </script>
