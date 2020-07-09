@@ -18,9 +18,9 @@
       </div>
       <div class="my-2 py-2 border-t border-b">
         Residents:
-        <div v-for="character in location.residents" :key="`location-${character}`">
+        <div v-for="character in location.residents" :key="`location-${character.id}`">
           <character-link
-            :character-url="character"
+            :character-id="character.id"
           />
         </div>
       </div>
@@ -32,7 +32,7 @@
 </template>
 
 <script>
-import { formResourceUrl } from '../api';
+import gql from 'graphql-tag'
 import CharacterLink from '../components/character-link';
 import Loading from '../components/loading';
 
@@ -41,27 +41,25 @@ export default {
     CharacterLink,
     Loading,
   },
-  data() {
-    return {
-      location: this.$store.state.locations.locations[this.resourceUrl],
-    };
-  },
-  computed: {
-    resourceUrl() { return formResourceUrl('location', this.$route.params.id); },
-  },
-  methods: {
-    fetchLocation() {
-      this.$store.dispatch('getLocation', this.resourceUrl)
-        .then(() => {
-          this.location = this.$store.state.locations.locations[this.resourceUrl];
-        });
+  apollo: {
+    location: {
+      query: gql`query getLocation ($id: ID) {
+        location (id: $id) {
+          id
+          name
+          type
+          dimension
+          residents {
+            id
+          }
+        }
+      }`,
+      variables () {
+        return {
+            id: this.$route.params.id,
+        }
+      }
     },
-  },
-  mounted() {
-    this.location = this.$store.state.locations.locations[this.resourceUrl];
-    if (this.location === undefined) {
-      this.fetchLocation();
-    }
   },
 };
 </script>

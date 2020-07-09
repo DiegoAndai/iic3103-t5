@@ -45,6 +45,7 @@ export default {
     episode: {
       query: gql`query getEpisode ($id: ID) {
         episode (id: $id) {
+          id
           name
           air_date
           episode

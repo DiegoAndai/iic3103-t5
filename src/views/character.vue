@@ -60,6 +60,7 @@ export default {
     character: {
       query: gql`query getCharacter ($id: ID) {
         character (id: $id) {
+          id
           name
           image
           status
