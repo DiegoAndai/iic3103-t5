@@ -34,7 +34,7 @@
       </div>
       <div class="mx-2">
         Found {{linkedLocations.length}} locations:
-        <div v-for="location in linkedCharacters" :key="location.id">
+        <div v-for="location in linkedLocations" :key="location.id">
           <location-link
             :location-id="location.id"
           />
@@ -90,7 +90,8 @@ export default {
         return {
             page: this.episodesPage,
         }
-      }
+      },
+      deep: true
     },
     characters: {
       query() {
@@ -113,7 +114,8 @@ export default {
         return {
             page: this.charactersPage,
         }
-      }
+      },
+      deep: true
     },
     locations: {
       query() {
@@ -136,21 +138,48 @@ export default {
         return {
             page: this.locationsPage,
         }
-      }
+      },
+      deep: true
     },
   },
   watch: {
     episodes: function ({results: newEpisodes, info: { next }}) {
-      this.episodesPage = next || this.episodesPage;
-      this.linkedEpisodes = [...this.linkedEpisodes, ...newEpisodes ]
+      if (this.episodesPage === 1) {
+        this.linkedEpisodes = [...newEpisodes]
+      } else {
+        this.linkedEpisodes = [...this.linkedEpisodes, ...newEpisodes ]
+      }
+      if (next) {
+        this.episodesPage = next
+      }
     },
     characters: function ({results: newCharacters, info: { next }}) {
-      this.charactersPage = next || this.charactersPage;
-      this.linkedCharacters = [...this.linkedCharacters, ...newCharacters ]
+      if (this.charactersPage === 1) {
+        this.linkedCharacters = [...newCharacters]
+      } else {
+        this.linkedCharacters = [...this.linkedCharacters, ...newCharacters ]
+      }
+      if (next) {
+        this.charactersPage = next
+      }
     },
     locations: function ({results: newLocations, info: { next }}) {
-      this.locationsPage = next || this.locationsPage;
-      this.linkedLocations = [...this.linkedLocations, ...newLocations ]
+      if (this.locationsPage === 1) {
+        this.linkedLocations = [...newLocations]
+      } else {
+        this.linkedLocations = [...this.linkedLocations, ...newLocations ]
+      }
+      if (next) {
+        this.locationsPage = next
+      }
+    },
+    '$route.query.term': function (term) {
+      this.linkedEpisodes = []
+      this.episodesPage = 1
+      this.linkedCharacters = []
+      this.charactersPage = 1
+      this.linkedLocations = []
+      this.locationsPage = 1
     }
   }
 };
